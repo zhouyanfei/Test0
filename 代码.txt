@@ -1,0 +1,226 @@
+/*
+        输入：多组测试数据，开始节点d，经过条件b，结束节点c，中间以空格隔开，0 0 0表示每组输入结束
+        样例输入：  0 a 1
+                    0 a 2
+                    0 b 1
+                    1 a 3
+                    1 a 4
+                    2 a 1
+                    0 0 0
+        解题思路：构造子集T
+                    0       a             b
+                            a{1,2}T0      b{1}T1
+                    T0      a{1,3,4}T2
+                    T1      a{3,4}T3
+                    T2      a{3,4}T3
+        由子集表生成新的连接图。
+                    T0      a       T2
+                    T1      a       T3
+                    T2      a       T3
+
+*/
+#include <cstdio>
+#include<iostream>
+#include<cstring>
+#include<algorithm>
+#include<set>
+#include<string>
+#include<vector>
+int k,k1=0;         //k用来记录输入的路径条数，k1用来记录新生成的图路径条数
+char d, b, c;       //临时存储，输入的三个操作数
+
+using namespace std;
+
+struct point
+{
+    char start;
+    char deal;
+    char end;
+};
+bool comp(const point &a, const point &b)
+{
+    if(a.start==b.start)
+        return a.deal<b.deal;
+    return a.start<b.start;
+}
+void myscanf(point *a)
+{
+    while(d!='0'||b!='0'||c!='0')
+    {
+        a[k].start = d;
+        a[k].deal = b;
+        a[k++].end = c;
+        scanf("%c %c %c", &d, &b, &c);
+        getchar();
+    }
+}
+void initial(point *a, set<string> &T, vector<string> &cpT)
+{
+    for(int i=0; i<k; i++)
+    {
+        if(a[i].start==a[0].start)
+        {
+            if(T.empty())
+            {
+                string str;
+                str.push_back(a[i].deal);
+                str.push_back(a[i].end);
+                T.insert(str);
+                cpT.push_back(str);
+            }
+            else
+            {
+                bool boo=true;
+                set<string>::iterator it;
+                for(it=T.begin(); it!=T.end(); ++it)
+                {
+                    string str0 = *it;
+                    if(str0[0]==a[i].deal)
+                    {
+                        boo = false;
+                        break;
+                    }
+                }
+                if(boo)
+                {
+                    string str;
+                    str.push_back(a[i].deal);
+                    str.push_back(a[i].end);
+                    cpT.push_back(str);
+                    T.insert(str);
+                }
+                else
+                {
+                    string str1 = *it;
+                    str1.push_back(a[i].end);
+                    sort(str1.begin()+1,str1.end());
+                    T.erase(it);
+                    T.insert(str1);
+                    cpT.push_back(str1);
+                }
+
+            }
+        }
+        else
+            break;
+    }
+}
+void iteratorT(point *a, point *printa, set<string> &T, vector<string> &cpT)
+{
+    int t;
+    set<string>::iterator it0;
+    set<string> T1;
+    char z='0';
+    for(it0=T.begin(); it0!=T.end(); ++it0)
+    {
+        string str2 = *it0;
+        int j=0;
+        t=0;
+        for(int i=1; i<str2.size(); i++)
+        {
+            for(; j<k; j++)
+            {
+                if(a[j].start==str2[i])
+                {
+                    if(t==0)
+                    {
+                        string str3;
+                        str3.push_back(a[j].deal);
+                        str3.push_back(a[j].end);
+                        T1.insert(str3);
+                        t++;
+                    }
+                    else
+                    {
+                        bool boo2=true;
+                        set<string>::iterator it1;
+                        for(it1=T1.begin(); it1!=T1.end(); ++it1)
+                        {
+                            string str3=*it1;
+                            if(str3[0]==a[j].deal)
+                            {
+                                boo2 = false;
+                                break;
+                            }
+                        }
+                        if(boo2)
+                        {
+                            string str4;
+                            str4.push_back(a[j].deal);
+                            str4.push_back(a[j].end);
+                            T1.insert(str4);
+                        }
+                        else
+                        {
+                            string str5 = *it1;
+                            str5.push_back(a[j].end);
+                            sort(str5.begin()+1,str5.end());
+                            T1.erase(it1);
+                            T1.insert(str5);
+                        }
+                    }
+                }
+                else if(t)
+                    break;
+            }
+        }
+        set<string>::iterator its;
+        for(its=T1.begin(); its!=T1.end(); ++its)
+        {
+            string str6 = *its;
+            if(T.find(str6)!=T.end())
+            {
+                printa[k1].start = z;
+                printa[k1].deal = str6[0];
+                for(int i=0; i<cpT.size();i++)
+                {
+                    if(str6.compare(cpT[i])==0)
+                        printa[k1++].end = i-1+48;
+                }
+            }
+            else
+            {
+                printa[k1].start = z;
+                printa[k1].deal = str6[0];
+                printa[k1++].end = cpT.size()-1+48;
+                cpT.push_back(*its);
+            }
+            T.insert(str6);
+        }
+        if(!T1.empty())
+            z++;
+        T1.clear();
+    }
+}
+void mprintf(set<string> &T, point *printa)
+{
+    printf("\n");
+    set<string>::iterator it2;
+    for(it2=T.begin(); it2!=T.end(); ++it2)
+        cout<<*it2<<endl;
+    printf("\n");
+    for(int i=0; i<k1; i++)
+        printf("%c %c %c\n", printa[i].start, printa[i].deal, printa[i].end);
+}
+int main()
+{
+    point a[105];
+    point printa[105];
+    while((scanf("%c %c %c", &d, &b, &c))!=EOF)
+    {
+        k=0;
+        getchar();
+        memset(a, 0, sizeof(a));
+        myscanf(a);
+        sort(a, a+k, comp);         //对输入路径，按开始节点升序排列，后序处理减少遍历次数
+        set<string> T;              //保存构造的子集T，利用set的无重复元素特点
+        vector<string> cpT;         //复制子集T中的元素（set会对元素进行排序）用来记录子集的序号
+
+        initial(a, T, cpT);         //初始化，构造0(开始符号)的子集
+        iteratorT(a, printa, T, cpT);
+
+        mprintf(T,printa);
+
+    }
+    return 0;
+}
